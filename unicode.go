@@ -1,3 +1,7 @@
+// Copyright 2012 The rspace Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -11,13 +15,15 @@ import (
 	"strings"
 )
 
-var doNum = flag.Bool("n", false, "output numeric values")
-var doChar = flag.Bool("c", false, "output characters")
-var doText = flag.Bool("t", false, "output plain text")
-var doDesc = flag.Bool("d", false, "describe the characters from the Unicode database, in simple form")
-var doUnic = flag.Bool("u", false, "describe the characters from the Unicode database, in Unicode form")
-var doUNIC = flag.Bool("U", false, "describe the characters from the Unicode database, in glorious detail")
-var doGrep = flag.Bool("g", false, "grep for argument string in data")
+var (
+	doNum  = flag.Bool("n", false, "output numeric values")
+	doChar = flag.Bool("c", false, "output characters")
+	doText = flag.Bool("t", false, "output plain text")
+	doDesc = flag.Bool("d", false, "describe the characters from the Unicode database, in simple form")
+	doUnic = flag.Bool("u", false, "describe the characters from the Unicode database, in Unicode form")
+	doUNIC = flag.Bool("U", false, "describe the characters from the Unicode database, in glorious detail")
+	doGrep = flag.Bool("g", false, "grep for argument string in data")
+)
 
 var printRange = false
 
