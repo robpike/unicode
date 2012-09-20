@@ -27,13 +27,51 @@ var (
 
 var printRange = false
 
-const unicodeTxt = "/usr/local/plan9/lib/unicode.txt"
-const unicodeDataTxt = "/usr/local/plan9/lib/UnicodeData.txt"
+var (
+	unicodeTxt     string
+	unicodeDataTxt string
+	goroot         string
+	gopath         string
+)
+
+func init() {
+	goroot = os.Getenv("GOROOT")
+	gopath = os.Getenv("GOPATH")
+}
+
+func getUnicode() {
+	if unicodeTxt == "" {
+		// Discover paths for unicode files.
+		unicodeTxt = getPath("unicode.txt")
+		unicodeDataTxt = getPath("UnicodeData.txt")
+	}
+}
+
+func getPath(base string) string {
+	var dir string
+	if goroot != "" {
+		d := goroot + "/" + "src/pkg/code.google.com/p/rspace.cmd/unicode/"
+		if _, err := os.Stat(d + base); err == nil {
+			dir = d
+		}
+	}
+	if dir == "" && gopath != "" {
+		d := gopath + "/" + "src/code.google.com/p/rspace.cmd/unicode/"
+		if _, err := os.Stat(d + base); err == nil {
+			dir = d
+		}
+	}
+	if dir == "" {
+		dir = "/usr/local/plan9/lib/"
+	}
+	return dir + base
+}
 
 func main() {
 	flag.Usage = usage
 	flag.Parse()
 	mode()
+	getUnicode()
 	var codes []rune
 	switch {
 	case *doGrep:
