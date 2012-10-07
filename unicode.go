@@ -126,6 +126,7 @@ const usageText = `usage: unicode [-c] [-d] [-n] [-t]
 -g: args are regular expressions for matching names
 -d: output textual description
 -t: output plain text, not one char per line
+-U: output full Unicode description
 
 Default behavior sniffs the arguments to select -c vs. -n.`
 
@@ -303,10 +304,11 @@ func dumpUnicode(s string) []byte {
 	if len(fields) == 0 {
 		return []byte{'\n'}
 	}
-	if len(fields) != len(prop) {
-		fatalf("expected %d fields, got %d", len(prop), len(fields))
-	}
 	b := new(bytes.Buffer)
+	if len(fields) != len(prop) {
+		fmt.Fprintf(b, "%s: can't print: expected %d fields, got %d\n", s, len(prop), len(fields))
+		return b.Bytes()
+	}
 	for i, f := range fields {
 		if f == "" {
 			continue
