@@ -128,7 +128,13 @@ const usageText = `usage: unicode [-c] [-d] [-n] [-t]
 -t: output plain text, not one char per line
 -U: output full Unicode description
 
-Default behavior sniffs the arguments to select -c vs. -n.`
+Default behavior sniffs the arguments to select -c vs. -n.
+
+For some options you will need UnicodeData.txt installed.
+Use curl or wget or your favorite webirific tool to copy
+	ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
+to
+	$GOPATH/src/code.google.com/p/rspace.cmd/unicode`
 
 func usage() {
 	fatalf(usageText)
