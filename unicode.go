@@ -2,6 +2,25 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+/*
+Unicode is a command-line tool for studying Unicode characters.
+
+usage: unicode [-c] [-d] [-n] [-t]
+-c: args are hex; output characters (xyz)
+-n: args are characters; output hex (23 or 23-44)
+-g: args are regular expressions for matching names
+-d: output textual description
+-t: output plain text, not one char per line
+-U: output full Unicode description
+
+Default behavior sniffs the arguments to select -c vs. -n.
+
+For some options you will need UnicodeData.txt installed.
+Use curl or wget or your favorite webirific tool to copy
+	ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
+to
+	$GOPATH/src/code.google.com/p/rspace.cmd/unicode
+*/
 package main // import "robpike.io/cmd/unicode"
 
 import (
