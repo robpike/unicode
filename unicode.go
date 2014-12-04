@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -48,23 +49,21 @@ func getUnicode() {
 }
 
 func getPath(base string) string {
-	var dir string
 	if goroot != "" {
-		d := goroot + "/" + "src/pkg/code.google.com/p/rspace.cmd/unicode/"
-		if _, err := os.Stat(d + base); err == nil {
-			dir = d
+		f := filepath.Join(goroot, "src/robpike.io/cmd/unicode", base)
+		if _, err := os.Stat(f); err == nil {
+			return f
 		}
 	}
-	if dir == "" && gopath != "" {
-		d := gopath + "/" + "src/code.google.com/p/rspace.cmd/unicode/"
-		if _, err := os.Stat(d + base); err == nil {
-			dir = d
+	if gopath != "" {
+		f := filepath.Join(gopath, "src/robpike.io/cmd/unicode", base)
+		if _, err := os.Stat(f); err == nil {
+			return f
 		}
 	}
-	if dir == "" {
-		dir = "/usr/local/plan9/lib/"
-	}
-	return dir + base
+	fmt.Fprintf(os.Stderr, "unicode: can't find %s\n", base)
+	os.Exit(1)
+	return ""
 }
 
 func main() {
