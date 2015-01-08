@@ -19,7 +19,7 @@ For some options you will need UnicodeData.txt installed.
 Use curl or wget or your favorite webirific tool to copy
 	ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
 to
-	$GOPATH/src/code.google.com/p/rspace.cmd/unicode
+	$GOPATH/src/robpike.io/cmd/unicode
 */
 package main // import "robpike.io/cmd/unicode"
 
@@ -152,7 +152,7 @@ For some options you will need UnicodeData.txt installed.
 Use curl or wget or your favorite webirific tool to copy
 	ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
 to
-	$GOPATH/src/code.google.com/p/rspace.cmd/unicode`
+	$GOPATH/src/robpike.io/cmd/unicode`
 
 func usage() {
 	fatalf(usageText)
