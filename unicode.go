@@ -171,19 +171,22 @@ func mode() {
 	if *doNum || *doChar {
 		return
 	}
-	// If first arg is a range, print chars from hex.
-	if strings.ContainsRune(flag.Arg(0), '-') {
+	alldigits := true
+	numDash := 0
+	for _, r := range strings.Join(flag.Args(), "") {
+		if !strings.ContainsRune("0123456789abcdefABCDEF-", r) {
+			alldigits = false
+		}
+		if r == '-' {
+			numDash++
+		}
+	}
+	// If there is one '-' it's a range; if zero it's just a hex number.
+	if alldigits && numDash <= 1 {
 		*doChar = true
 		return
 	}
-	// If there are non-hex digits, print hex from chars.
-	for _, r := range strings.Join(flag.Args(), "") {
-		if !strings.ContainsRune("0123456789abcdefABCDEF", r) {
-			*doNum = true
-			return
-		}
-	}
-	*doChar = true
+	*doNum = true
 }
 
 func argsAreChars() []rune {
