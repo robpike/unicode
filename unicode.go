@@ -52,11 +52,13 @@ var (
 	unicodeDataTxt string
 	goroot         string
 	gopath         string
+	syspath        string
 )
 
 func init() {
 	goroot = os.Getenv("GOROOT")
 	gopath = os.Getenv("GOPATH")
+	syspath = "/usr/share/unicode"
 }
 
 func getUnicode() {
@@ -80,6 +82,11 @@ func getPath(base string) string {
 			return f
 		}
 	}
+	f := filepath.Join(syspath, base)
+	if _, err := os.Stat(f); err == nil {
+		return f
+	}
+
 	fmt.Fprintf(os.Stderr, "unicode: can't find %s\n", base)
 	os.Exit(1)
 	return ""
