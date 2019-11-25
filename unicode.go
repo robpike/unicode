@@ -24,6 +24,7 @@ to
 package main // import "robpike.io/cmd/unicode"
 
 import (
+	"bufio"
 	"bytes"
 	"flag"
 	"fmt"
@@ -43,6 +44,8 @@ var (
 	doUnic = flag.Bool("u", false, "describe the characters from the Unicode database, in Unicode form")
 	doUNIC = flag.Bool("U", false, "describe the characters from the Unicode database, in glorious detail")
 	doGrep = flag.Bool("g", false, "grep for argument string in data")
+
+	doPrintUnicodeTxt = flag.Bool("db", false, "convert UnicodeData.txt to unicode.txt format on stdout")
 )
 
 var printRange = false
@@ -62,7 +65,9 @@ func init() {
 func getUnicode() {
 	if unicodeTxt == "" {
 		// Discover paths for unicode files.
-		unicodeTxt = getPath("unicode.txt")
+		if !*doPrintUnicodeTxt {
+			unicodeTxt = getPath("unicode.txt")
+		}
 		unicodeDataTxt = getPath("UnicodeData.txt")
 	}
 }
@@ -92,6 +97,9 @@ func main() {
 	getUnicode()
 	var codes []rune
 	switch {
+	case *doPrintUnicodeTxt:
+		printUnicodeTxt()
+		return
 	case *doGrep:
 		codes = argsAreRegexps()
 	case *doChar:
@@ -99,12 +107,12 @@ func main() {
 	case *doNum:
 		codes = argsAreChars()
 	}
-	if *doDesc {
-		desc(codes, unicodeTxt)
-		return
-	}
 	if *doUnic || *doUNIC {
 		desc(codes, unicodeDataTxt)
+		return
+	}
+	if *doDesc {
+		desc(codes, unicodeTxt)
 		return
 	}
 	if *doText {
@@ -161,6 +169,9 @@ func usage() {
 // Mode determines whether we have numeric or character input.
 // If there are no flags, we sniff the first argument.
 func mode() {
+	if *doPrintUnicodeTxt {
+		return
+	}
 	if len(flag.Args()) == 0 {
 		usage()
 	}
@@ -346,4 +357,18 @@ func dumpUnicode(s string) []byte {
 		fmt.Fprintf(b, "%s%s\n", prop[i], f)
 	}
 	return b.Bytes()
+}
+
+func printUnicodeTxt() {
+	lines := getFile(unicodeDataTxt)
+	w := bufio.NewWriter(os.Stdout)
+	defer w.Flush()
+	for _, line := range lines {
+		fields := strings.Split(strings.ToLower(line), ";")
+		desc := fields[1]
+		if fields[10] != "" {
+			desc += "; " + fields[10]
+		}
+		fmt.Fprintf(w, "%s\t%s\n", fields[0], desc)
+	}
 }
