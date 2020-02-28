@@ -6,12 +6,12 @@
 Unicode is a command-line tool for studying Unicode characters.
 
 usage: unicode [-c] [-d] [-n] [-t]
--c: args are hex; output characters (xyz)
--n: args are characters; output hex (23 or 23-44)
--g: args are regular expressions for matching names
--d: output textual description
--t: output plain text, not one char per line
--U: output full Unicode description
+	-c: args are hex; output characters (xyz)
+	-n: args are characters; output hex (23 or 23-44)
+	-g: args are regular expressions for matching names
+	-d: output textual description
+	-t: output plain text, not one char per line
+	-U: output full Unicode description
 
 Default behavior sniffs the arguments to select -c vs. -n.
 
@@ -163,7 +163,7 @@ to
 	$GOPATH/src/robpike.io/cmd/unicode`
 
 func usage() {
-	fatalf(usageText)
+	fatalf("%s", usageText)
 }
 
 // Mode determines whether we have numeric or character input.
