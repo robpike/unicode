@@ -14,23 +14,15 @@ usage: unicode [-c] [-d] [-n] [-t]
 	-U: output full Unicode description
 
 Default behavior sniffs the arguments to select -c vs. -n.
-
-For some options you will need UnicodeData.txt installed.
-Use curl or wget or your favorite webirific tool to copy
-	ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
-to
-	$GOPATH/src/robpike.io/cmd/unicode
 */
 package main // import "robpike.io/cmd/unicode"
 
 import (
-	"bufio"
 	"bytes"
+	_ "embed"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -44,62 +36,23 @@ var (
 	doUnic = flag.Bool("u", false, "describe the characters from the Unicode database, in Unicode form")
 	doUNIC = flag.Bool("U", false, "describe the characters from the Unicode database, in glorious detail")
 	doGrep = flag.Bool("g", false, "grep for argument string in data")
-
-	doPrintUnicodeTxt = flag.Bool("db", false, "convert UnicodeData.txt to unicode.txt format on stdout")
 )
 
 var printRange = false
 
+//go:generate sh -c "curl http://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt >UnicodeData.txt"
 var (
-	unicodeTxt     string
+	//go:embed UnicodeData.txt
 	unicodeDataTxt string
-	goroot         string
-	gopath         string
+	unicodeLines   = splitLines(unicodeDataTxt)
 )
-
-func init() {
-	goroot = os.Getenv("GOROOT")
-	gopath = os.Getenv("GOPATH")
-}
-
-func getUnicode() {
-	if unicodeTxt == "" {
-		// Discover paths for unicode files.
-		if !*doPrintUnicodeTxt {
-			unicodeTxt = getPath("unicode.txt")
-		}
-		unicodeDataTxt = getPath("UnicodeData.txt")
-	}
-}
-
-func getPath(base string) string {
-	if goroot != "" {
-		f := filepath.Join(goroot, "src/robpike.io/cmd/unicode", base)
-		if _, err := os.Stat(f); err == nil {
-			return f
-		}
-	}
-	if gopath != "" {
-		f := filepath.Join(gopath, "src/robpike.io/cmd/unicode", base)
-		if _, err := os.Stat(f); err == nil {
-			return f
-		}
-	}
-	fmt.Fprintf(os.Stderr, "unicode: can't find %s\n", base)
-	os.Exit(1)
-	return ""
-}
 
 func main() {
 	flag.Usage = usage
 	flag.Parse()
 	mode()
-	getUnicode()
 	var codes []rune
 	switch {
-	case *doPrintUnicodeTxt:
-		printUnicodeTxt()
-		return
 	case *doGrep:
 		codes = argsAreRegexps()
 	case *doChar:
@@ -107,12 +60,8 @@ func main() {
 	case *doNum:
 		codes = argsAreChars()
 	}
-	if *doUnic || *doUNIC {
-		desc(codes, unicodeDataTxt)
-		return
-	}
-	if *doDesc {
-		desc(codes, unicodeTxt)
+	if *doUnic || *doUNIC || *doDesc {
+		desc(codes)
 		return
 	}
 	if *doText {
@@ -142,7 +91,10 @@ func main() {
 }
 
 func fatalf(format string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, format+"\n", args...)
+	if !strings.HasSuffix(format, "\n") {
+		format += "\n"
+	}
+	fmt.Fprintf(os.Stderr, format, args...)
 	os.Exit(2)
 }
 
@@ -155,12 +107,7 @@ const usageText = `usage: unicode [-c] [-d] [-n] [-t]
 -U: output full Unicode description
 
 Default behavior sniffs the arguments to select -c vs. -n.
-
-For some options you will need UnicodeData.txt installed.
-Use curl or wget or your favorite webirific tool to copy
-	ftp://ftp.unicode.org/Public/UNIDATA/UnicodeData.txt
-to
-	$GOPATH/src/robpike.io/cmd/unicode`
+`
 
 func usage() {
 	fatalf("%s", usageText)
@@ -169,9 +116,6 @@ func usage() {
 // Mode determines whether we have numeric or character input.
 // If there are no flags, we sniff the first argument.
 func mode() {
-	if *doPrintUnicodeTxt {
-		return
-	}
 	if len(flag.Args()) == 0 {
 		usage()
 	}
@@ -258,13 +202,17 @@ func argsAreNumbers() []rune {
 
 func argsAreRegexps() []rune {
 	var codes []rune
-	lines := getFile(unicodeTxt)
 	for _, a := range flag.Args() {
 		re, err := regexp.Compile(a)
 		if err != nil {
 			fatalf("%s", err)
 		}
-		for i, line := range lines {
+		for i, line := range unicodeLines {
+			fields := strings.Split(strings.ToLower(line), ";")
+			line = fields[0] + "\t" + fields[1]
+			if fields[10] != "" {
+				line += "; " + fields[10]
+			}
 			if re.MatchString(line) {
 				r, _ := runeOfLine(i, line)
 				codes = append(codes, r)
@@ -274,23 +222,12 @@ func argsAreRegexps() []rune {
 	return codes
 }
 
-var files = make(map[string][]string)
-
-func getFile(file string) []string {
-	lines := files[file]
-	if lines != nil {
-		return lines
-	}
-	text, err := ioutil.ReadFile(file)
-	if err != nil {
-		fatalf("%s", err)
-	}
-	lines = strings.Split(string(text), "\n")
+func splitLines(text string) []string {
+	lines := strings.Split(text, "\n")
 	// We get an empty final line; drop it.
 	if len(lines) > 0 && len(lines[len(lines)-1]) == 0 {
 		lines = lines[:len(lines)-1]
 	}
-	files[file] = lines
 	return lines
 }
 
@@ -302,10 +239,9 @@ func runeOfLine(i int, line string) (r rune, tab int) {
 	return parseRune(line[0:tab]), tab
 }
 
-func desc(codes []rune, file string) {
-	lines := getFile(file)
+func desc(codes []rune) {
 	runeData := make(map[rune]string)
-	for i, l := range lines {
+	for i, l := range unicodeLines {
 		r, tab := runeOfLine(i, l)
 		runeData[r] = l[tab+1:]
 	}
@@ -313,9 +249,18 @@ func desc(codes []rune, file string) {
 		for _, r := range codes {
 			fmt.Printf("%#U %s", r, dumpUnicode(runeData[r]))
 		}
-	} else {
+	} else if *doUnic {
 		for _, r := range codes {
 			fmt.Printf("%#U %s\n", r, runeData[r])
+		}
+	} else {
+		for _, r := range codes {
+			fields := strings.Split(strings.ToLower(runeData[r]), ";")
+			desc := fields[0]
+			if fields[9] != "" {
+				desc += "; " + fields[9]
+			}
+			fmt.Printf("%#U %s\n", r, desc)
 		}
 	}
 }
@@ -357,18 +302,4 @@ func dumpUnicode(s string) []byte {
 		fmt.Fprintf(b, "%s%s\n", prop[i], f)
 	}
 	return b.Bytes()
-}
-
-func printUnicodeTxt() {
-	lines := getFile(unicodeDataTxt)
-	w := bufio.NewWriter(os.Stdout)
-	defer w.Flush()
-	for _, line := range lines {
-		fields := strings.Split(strings.ToLower(line), ";")
-		desc := fields[1]
-		if fields[10] != "" {
-			desc += "; " + fields[10]
-		}
-		fmt.Fprintf(w, "%s\t%s\n", fields[0], desc)
-	}
 }
