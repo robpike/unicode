@@ -6,6 +6,7 @@
 Unicode is a command-line tool for studying Unicode characters.
 
 usage: unicode [-c] [-d] [-n] [-t]
+
 	-c: args are hex; output characters (xyz)
 	-n: args are characters; output hex (23 or 23-44)
 	-g: args are regular expressions for matching names
@@ -257,7 +258,7 @@ func desc(codes []rune) {
 		for _, r := range codes {
 			fields := strings.Split(strings.ToLower(runeData[r]), ";")
 			desc := fields[0]
-			if fields[9] != "" {
+			if len(desc) >= 9 && fields[9] != "" {
 				desc += "; " + fields[9]
 			}
 			fmt.Printf("%#U %s\n", r, desc)
